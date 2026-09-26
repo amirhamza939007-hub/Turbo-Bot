@@ -2,6 +2,16 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = requi
 const { Boom } = require('@hapi/boom');
 const fs = require('fs');
 const pino = require('pino');
+const http = require('http');
+
+// রেন্ডারের পোর্টের জন্য ফেক সার্ভার (Port error দূর করার জন্য)
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('TURBO CITY Bot is running!\n');
+});
+server.listen(process.env.PORT || 3000, () => {
+    console.log('Server is listening on port ' + (process.env.PORT || 3000));
+});
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -12,7 +22,7 @@ async function startBot() {
         logger: pino({ level: 'silent' })
     });
 
-    // পেয়ারিং কোড (নতুন নম্বর সহ: 8801929890011)
+    // পেয়ারিং কোড লজিক (নম্বর: 8801929890011)
     if (!sock.authState.creds.registered) {
         const phoneNumber = "8801929890011"; 
         setTimeout(async () => {
@@ -42,7 +52,7 @@ async function startBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // গ্রুপে কেউ জয়েন করলে বিশাল ওয়েলকাম মেসেজ ও ছবি পাঠানোর লজিক
+    // গ্রুপে কেউ জয়েন করলে ওয়েলকাম মেসেজ ও ছবি পাঠানোর লজিক
     sock.ev.on('group-participants.update', async (anu) => {
         try {
             const participants = anu.participants;
