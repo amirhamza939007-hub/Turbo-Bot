@@ -63,7 +63,7 @@ async function startBot() {
 🔥  WELCOME TO TURBO CITY  🔥
 ╚══════════════════════╝
 
-👑 MEYERPUR 4 • FREE FIRE GUILD
+👑 MEHERPUR #4 • FREE FIRE GUILD
 🏆 KHULNA DIVISION #86
 ❤️ ONE SQUAD • ONE FAMILY ❤️
 
