@@ -5,15 +5,30 @@ const pino = require('pino');
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
-    
+
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true,
+        printQRInTerminal: false,
         logger: pino({ level: 'silent' })
     });
 
+    // পেয়ারিং কোড (নতুন নম্বর সহ: 8801929890011)
+    if (!sock.authState.creds.registered) {
+        const phoneNumber = "8801929890011"; 
+        setTimeout(async () => {
+            try {
+                let code = await sock.requestPairingCode(phoneNumber);
+                console.log(`\n========================================`);
+                console.log(` YOUR WHATSAPP PAIRING CODE IS: ${code} `);
+                console.log(`========================================\n`);
+            } catch (error) {
+                console.error("Error requesting pairing code:", error);
+            }
+        }, 4000);
+    }
+
     sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
+        const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log('Connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
@@ -27,20 +42,18 @@ async function startBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // গ্রুপে কেউ জয়েন করলে ওয়েলকাম মেসেজ ও ছবি পাঠানোর লজিক
+    // গ্রুপে কেউ জয়েন করলে বিশাল ওয়েলকাম মেসেজ ও ছবি পাঠানোর লজিক
     sock.ev.on('group-participants.update', async (anu) => {
         try {
             const participants = anu.participants;
-            
             for (const num of participants) {
                 if (anu.action === 'add') {
-                    const welcomeMessage = `╔══════════════════════╗
+                    const welcomeMessage = `
+╔══════════════════════╗
 🔥  WELCOME TO TURBO CITY  🔥
 ╚══════════════════════╝
 
-👋 Hello @${num.split('@')[0]}!
-
-👑 MEHERPUR #4 • FREE FIRE GUILD
+👑 MEYERPUR 4 • FREE FIRE GUILD
 🏆 KHULNA DIVISION #86
 ❤️ ONE SQUAD • ONE FAMILY ❤️
 
@@ -79,19 +92,19 @@ async function startBot() {
 👑 ONE SQUAD • ONE FAMILY 👑
 ━━━━━━━━━━━━━━━━━━
 
-💫 নতুন Member-কে সবাই Welcome জানাও!
-❤️ Stay Active • Stay Loyal • Stay United ❤️`;
-                    
-                    // ছবি এবং সাজানো গোছানো টেক্সট পাঠানো
-                    await sock.sendMessage(anu.id, { 
-                        image: fs.readFileSync('./welcome to.jpg'), 
+💫 নতুন Member-কে সবাই Welcome জানাও (@${num.split('@')[0]})!
+❤️ Stay Active • Stay Loyal • Stay United ❤️
+`;
+                    const buffer = fs.readFileSync('./welcome to.jpg');
+                    await sock.sendMessage(anu.id, {
+                        image: buffer,
                         caption: welcomeMessage,
                         mentions: [num]
                     });
                 }
             }
         } catch (err) {
-            console.log('Error in welcome message: ', err);
+            console.log("Error in welcome message:", err);
         }
     });
 }
